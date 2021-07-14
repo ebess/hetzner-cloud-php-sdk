@@ -86,11 +86,14 @@ class Firewall extends Model implements Resource
      */
     public function update(array $data): ?self
     {
-        $response = $this->httpClient->put('firewalls/'.$this->id, [
-            'json' => $data,
-        ]);
-        if (! HetznerAPIClient::hasError($response)) {
-            return self::parse(json_decode((string) $response->getBody())->firewall);
+        $response = $this->httpClient->put(
+            'firewalls/' . $this->id,
+            [
+                'json' => $data,
+            ]
+        );
+        if (!HetznerAPIClient::hasError($response)) {
+            return self::parse(json_decode((string)$response->getBody())->firewall);
         }
 
         return null;
@@ -113,7 +116,14 @@ class Firewall extends Model implements Resource
         }
 
         foreach ($input->applied_to as $a) {
-            $appliedTo[] = new FirewallResource($a->type, new Server($a->server->id));
+            switch ($a->type) {
+                case 'server':
+                    $appliedTo[] = new FirewallResource($a->type, new Server($a->server->id));
+                    break;
+                case 'label_selector':
+                    $appliedTo[] = new FirewallLabelSelectorResource($a->label_selector->selector);
+                    break;
+            }
         }
 
         return new self($input->id, $input->name, $rules, $appliedTo, get_object_vars($input->labels), $input->created);
@@ -129,21 +139,31 @@ class Firewall extends Model implements Resource
      */
     public function setRules(array $rules): ?ApiResponse
     {
-        $response = $this->httpClient->post('firewalls/'.$this->id.'/actions/set_rules', [
-            'json' => [
-                'rules' => collect($rules)->map(function ($r) {
-                    return $r->toRequestSchema();
-                }),
-            ],
-        ]);
-        if (! HetznerAPIClient::hasError($response)) {
-            $payload = json_decode((string) $response->getBody());
+        $response = $this->httpClient->post(
+            'firewalls/' . $this->id . '/actions/set_rules',
+            [
+                'json' => [
+                    'rules' => collect($rules)->map(
+                        function ($r) {
+                            return $r->toRequestSchema();
+                        }
+                    ),
+                ],
+            ]
+        );
+        if (!HetznerAPIClient::hasError($response)) {
+            $payload = json_decode((string)$response->getBody());
 
-            return APIResponse::create([
-                'actions' => collect($payload->actions)->map(function ($action) {
-                    return Action::parse($action);
-                })->toArray(),
-            ], $response->getHeaders());
+            return APIResponse::create(
+                [
+                    'actions' => collect($payload->actions)->map(
+                        function ($action) {
+                            return Action::parse($action);
+                        }
+                    )->toArray(),
+                ],
+                $response->getHeaders()
+            );
         }
 
         return null;
@@ -158,8 +178,8 @@ class Firewall extends Model implements Resource
      */
     public function delete(): bool
     {
-        $response = $this->httpClient->delete('firewalls/'.$this->id);
-        if (! HetznerAPIClient::hasError($response)) {
+        $response = $this->httpClient->delete('firewalls/' . $this->id);
+        if (!HetznerAPIClient::hasError($response)) {
             return true;
         }
 
@@ -176,21 +196,31 @@ class Firewall extends Model implements Resource
      */
     public function applyToResources(array $resources): ?APIResponse
     {
-        $response = $this->httpClient->post('firewalls/'.$this->id.'/actions/apply_to_resources', [
-            'json' => [
-                'apply_to' => collect($resources)->map(function ($r) {
-                    return $r->toRequestSchema();
-                }),
-            ],
-        ]);
-        if (! HetznerAPIClient::hasError($response)) {
-            $payload = json_decode((string) $response->getBody());
+        $response = $this->httpClient->post(
+            'firewalls/' . $this->id . '/actions/apply_to_resources',
+            [
+                'json' => [
+                    'apply_to' => collect($resources)->map(
+                        function ($r) {
+                            return $r->toRequestSchema();
+                        }
+                    ),
+                ],
+            ]
+        );
+        if (!HetznerAPIClient::hasError($response)) {
+            $payload = json_decode((string)$response->getBody());
 
-            return APIResponse::create([
-                'actions' => collect($payload->actions)->map(function ($action) {
-                    return Action::parse($action);
-                })->toArray(),
-            ], $response->getHeaders());
+            return APIResponse::create(
+                [
+                    'actions' => collect($payload->actions)->map(
+                        function ($action) {
+                            return Action::parse($action);
+                        }
+                    )->toArray(),
+                ],
+                $response->getHeaders()
+            );
         }
 
         return null;
@@ -206,21 +236,31 @@ class Firewall extends Model implements Resource
      */
     public function removeFromResources(array $resources): ?APIResponse
     {
-        $response = $this->httpClient->post('firewalls/'.$this->id.'/actions/remove_from_resources', [
-            'json' => [
-                'remove_from' => collect($resources)->map(function ($r) {
-                    return $r->toRequestSchema();
-                }),
-            ],
-        ]);
-        if (! HetznerAPIClient::hasError($response)) {
-            $payload = json_decode((string) $response->getBody());
+        $response = $this->httpClient->post(
+            'firewalls/' . $this->id . '/actions/remove_from_resources',
+            [
+                'json' => [
+                    'remove_from' => collect($resources)->map(
+                        function ($r) {
+                            return $r->toRequestSchema();
+                        }
+                    ),
+                ],
+            ]
+        );
+        if (!HetznerAPIClient::hasError($response)) {
+            $payload = json_decode((string)$response->getBody());
 
-            return APIResponse::create([
-                'actions' => collect($payload->actions)->map(function ($action) {
-                    return Action::parse($action);
-                })->toArray(),
-            ], $response->getHeaders());
+            return APIResponse::create(
+                [
+                    'actions' => collect($payload->actions)->map(
+                        function ($action) {
+                            return Action::parse($action);
+                        }
+                    )->toArray(),
+                ],
+                $response->getHeaders()
+            );
         }
 
         return null;

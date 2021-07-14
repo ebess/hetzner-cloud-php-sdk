@@ -2,11 +2,9 @@
 
 namespace LKDev\HetznerCloud\Models\Firewalls;
 
-use LKDev\HetznerCloud\Models\Firewalls\FirewallResource;
-
 class FirewallLabelSelectorResource extends FirewallResource
 {
-    private string $selector;
+    private $selector;
 
     const TYPE = 'label_selector';
 
